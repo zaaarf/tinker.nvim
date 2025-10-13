@@ -32,18 +32,6 @@ return {
 	'fidian/hexmode',                -- convert buffers into hex view with xxd
 	'alemidev/vim-combo',            -- track code combos
 
-	{
-		"folke/lazydev.nvim",
-		ft = "lua", -- only load on lua files
-		opts = {
-			library = {
-				-- See the configuration section for more details
-				-- Load luvit types when the `vim.uv` word is found
-				{ path = "luvit-meta/library", words = { "vim%.uv" } },
-			},
-		},
-	},
-
 	'tpope/vim-fugitive',            -- better git commands
 	'tpope/vim-surround',            -- text object motions for surrounding
 
@@ -232,26 +220,16 @@ return {
 		config = function ()
 			local core_capabilities = vim.lsp.protocol.make_client_capabilities()
 			local cmp_capabilities = require('cmp_nvim_lsp').default_capabilities(core_capabilities)
-			local capabilities = vim.tbl_deep_extend('force', core_capabilities, cmp_capabilities)
-			local lspconfig = require("lspconfig")
-			lspconfig.intelephense.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.bashls.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.pylsp.setup({capabilites = capabilities, on_attach = set_lsp_binds, settings = { pylsp = { plugins = { pycodestyle = { enabled = false } } } } })
-			lspconfig.clangd.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.ltex.setup({capabilities=capabilities, on_attach=set_lsp_binds, debounce_text_changes = 300, settings = { ltex = { language = "it-IT" }}})
-			lspconfig.lua_ls.setup({capabilites=capabilities, on_attach=set_lsp_binds, settings = {
-				Lua = { telemetry = { enable = false }, workspace = { checkThirdParty = false }}
-			}}) -- default-on telemetry is never ok ...
-			lspconfig.buf_ls.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.ts_ls.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.html.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.ruby_lsp.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.elixirls.setup({capabilites=capabilities, on_attach=set_lsp_binds, cmd= {"/usr/bin/elixir-ls"}})
-			lspconfig.gopls.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			lspconfig.dartls.setup({capabilities=capabilities, on_attach=set_lsp_binds})
-			-- lspconfig.rust_analyzer.setup({capabilities=capabilities, on_attach=set_lsp_binds, settings = { ['rust-analyzer'] = { checkOnSave = { command = "clippy"}}}})
-			-- lspconfig.java_language_server.setup({capabilities=capabilities, on_attach=set_lsp_binds, cmd = { '/home/alemi/dev/software/java-language-server/dist/lang_server_linux.sh' }})
-			-- lspconfig.kotlin_language_server.setup({capabilities=capabilities, on_attach=set_lsp_binds})
+			local capabilities_keybinds_config = {
+				on_attach = set_lsp_binds,
+				capabilities = vim.tbl_deep_extend('force', core_capabilities, cmp_capabilities),
+			}
+			local lsp_config = require('lsp-config')
+			for _, server in pairs(lsp_config) do
+				local config = vim.tbl_deep_extend('force', server.config or {}, capabilities_keybinds_config)
+				vim.lsp.enable(server.name)
+				vim.lsp.config(server.name, config)
+			end
 		end
 	},
 
